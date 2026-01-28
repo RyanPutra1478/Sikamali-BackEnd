@@ -5,8 +5,13 @@ const RoleModel = require('../models/roleModel');
 const logController = require('../controllers/logController');
 require('dotenv').config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'rahasia_sikamali_2025';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'rahasia_refresh_sikamali_2025';
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+
+if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
+    console.error('FATAL: JWT secrets are not defined in environment variables!');
+    process.exit(1);
+}
 
 const AuthService = {
     generateToken: (user) => {
@@ -102,7 +107,10 @@ const AuthService = {
             [refreshToken]
         );
 
-        if (tokens.length === 0) throw new Error('Refresh token tidak valid atau kadaluwarsa');
+        if (tokens.length === 0) {
+            console.warn('[AUTH-SERVICE] Refresh Token Validation Failed: Token not found or expired in DB');
+            throw new Error('Refresh token tidak valid atau kadaluwarsa');
+        }
 
         const user = await UserService.getUserById(decoded.id);
         if (!user) throw new Error('Pengguna tidak ditemukan');

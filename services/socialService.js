@@ -15,8 +15,10 @@ const SocialService = {
         if (!kk_id) throw new Error('KK ID wajib diisi');
         if (!member_id) throw new Error('Member ID wajib diisi');
 
-        const existing = await KesejahteraanModel.getByKKId(kk_id); // This might be problematic if multiple members in same KK have records. 
-        // Better search by member_id if it's meant to be per person.
+        const existing = await KesejahteraanModel.getByKKId(kk_id);
+        if (existing) {
+            throw new Error('Data kesejahteraan untuk KK ini sudah terdaftar. Silakan hapus data sebelumnya terlebih dahulu jika ingin mengganti data.');
+        }
 
         const currentStatus = status_kesejahteraan || 'sejahtera';
         const welfareData = {
@@ -32,15 +34,9 @@ const SocialService = {
             assessed_by: user.id
         };
 
-        if (existing && existing.member_id === member_id) {
-            await KesejahteraanModel.update(existing.id, welfareData);
-            await logController.createLog(user.id, 'UPDATE', 'KESEJAHTERAAN', existing.id, { member_id, status_kesejahteraan, kk_id }, ip);
-            return { message: 'Data diperbarui' };
-        } else {
-            const insertId = await KesejahteraanModel.create(welfareData);
-            await logController.createLog(user.id, 'CREATE', 'KESEJAHTERAAN', insertId, { member_id, status_kesejahteraan, kk_id }, ip);
-            return { message: 'Data disimpan' };
-        }
+        const insertId = await KesejahteraanModel.create(welfareData);
+        await logController.createLog(user.id, 'CREATE', 'KESEJAHTERAAN', insertId, { member_id, status_kesejahteraan, kk_id }, ip);
+        return { message: 'Data kesejahteraan KK berhasil disimpan' };
     },
 
     updateKesejahteraanRecord: async (user, id, data, ip) => {

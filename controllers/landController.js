@@ -62,7 +62,12 @@ exports.searchKK = async (req, res) => {
 exports.getLandPhoto = (req, res) => {
   const path = require('path');
   const fs = require('fs');
-  const filePath = path.join(__dirname, '../uploads/house_photos', req.params.filename);
-  if (fs.existsSync(filePath)) res.sendFile(filePath);
-  else res.status(404).json({ error: 'Foto tidak ditemukan' });
+  const safeFilename = path.basename(req.params.filename);
+  const filePath = path.join(__dirname, '../uploads/house_photos', safeFilename);
+
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({ error: 'Foto tidak ditemukan' });
+  }
 };

@@ -36,13 +36,15 @@ const login = async (req, res) => {
 };
 
 const refreshToken = async (req, res) => {
-  const { refreshToken } = req.body;
+  console.log(`[AUTH] Refresh Token Triggered. IP: ${req.ip}`);
   if (!refreshToken) {
+    console.warn('[AUTH] Refresh Token Attempt Failed: No token provided');
     return res.status(400).json({ success: false, error: 'Refresh token diperlukan' });
   }
 
   try {
     const result = await AuthService.refreshAccessToken(refreshToken);
+    console.log(`[AUTH] Refresh Token Successful for User ID: ${result.user.id}`);
     res.json({
       success: true,
       ...result

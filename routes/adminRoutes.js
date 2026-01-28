@@ -34,19 +34,19 @@ router.use(authMiddleware);
 //  GROUP 1: DASHBOARD & DATA PREVIEW (READ ONLY)
 // ======================================================
 
-// Boleh diakses semua role yang sudah login
+// Boleh diakses oleh superadmin & admin
 router.get(
   '/stats',
-  authorizeRoles('superadmin', 'admin', 'user', 'guest'),
+  authorizeRoles('superadmin', 'admin'),
   getDashboardStats
 );
 
 // Data tabel admin (KK, Employment, Prasejahtera, Land)
 // Dibuka hanya untuk superadmin & admin
-router.get('/kk', authorizeRoles('superadmin', 'admin', 'user'), getKKTable);
-router.get('/employment', authorizeRoles('superadmin', 'admin', 'user'), getEmploymentData);
-router.get('/kesejahteraan', authorizeRoles('superadmin', 'admin', 'user'), getKesejahteraanData);
-router.get('/land', authorizeRoles('superadmin', 'admin', 'user'), getLandData);
+router.get('/kk', authorizeRoles('superadmin', 'admin'), getKKTable);
+router.get('/employment', authorizeRoles('superadmin', 'admin'), getEmploymentData);
+router.get('/kesejahteraan', authorizeRoles('superadmin', 'admin'), getKesejahteraanData);
+router.get('/land', authorizeRoles('superadmin', 'admin'), getLandData);
 
 // ======================================================
 //  GROUP 2: DATA MANAGEMENT (DB Record) → superadmin & admin

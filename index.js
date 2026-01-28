@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./config/database');
 require("dotenv").config();
-console.log("DB_USER =>", process.env.DB_USER);
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -20,7 +19,25 @@ const previewRoutes = require('./routes/previewRoutes'); // Explicitly import pr
 const app = express();
 
 // Middleware
-app.use(cors());
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // 1. Allow mobile apps or curl (no origin)
+    if (!origin) return callback(null, true);
+
+    // 2. Check if origin is allowed
+    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      console.log('CORS Rejected for origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes

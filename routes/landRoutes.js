@@ -15,16 +15,16 @@ const { authMiddleware, authorizeRoles } = require('../middleware/auth');
 router.get('/foto/:filename', getLandPhoto);
 router.use(authMiddleware);
 
-router.get('/search', authorizeRoles('superadmin', 'admin', 'user'), searchKK);
-router.get('/kk/:nomor_kk', authorizeRoles('superadmin', 'admin', 'user'), getKKByNomor);
+router.get('/search', authorizeRoles('superadmin', 'admin'), searchKK);
+router.get('/kk/:nomor_kk', authorizeRoles('superadmin', 'admin'), getKKByNomor);
 
 router.post(
   '/',
-  authorizeRoles('superadmin', 'admin', 'user'),
+  authorizeRoles('superadmin', 'admin'),
   upload.single('foto_rumah'),
   createLandPlot
 );
-router.get('/', authorizeRoles('superadmin', 'admin', 'user'), getLandPlots);
+router.get('/', authorizeRoles('superadmin', 'admin'), getLandPlots);
 router.put(
   '/:id',
   authorizeRoles('superadmin', 'admin'),

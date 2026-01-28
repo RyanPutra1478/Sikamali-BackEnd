@@ -42,15 +42,6 @@ exports.deleteDocument = async (req, res) => {
   }
 };
 
-exports.getDocumentFile = async (req, res) => {
-  try {
-    const filePath = path.join(__dirname, '../uploads', req.params.filename);
-    res.sendFile(filePath);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
 // 2. Manual Input & Bridge Methods
 exports.createKKManual = async (req, res) => {
   try {

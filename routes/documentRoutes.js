@@ -49,50 +49,30 @@ router.use(authMiddleware);
    (yang lama dari documentRoutes.js)
 ================================ */
 
-// Input Data (Upload file & manual KK)
-router.post(
-  '/',
-  authorizeRoles('superadmin', 'admin', 'user'),
-  upload.single('file'),
-  uploadDocument
-);
-
-router.post(
-  '/manual/kk',
-  authorizeRoles('superadmin', 'admin', 'user'),
-  createKKManual
-);
-
 // Import Excel
 router.post(
   '/import/excel',
-  // authorizeRoles('superadmin', 'admin'),
+  authorizeRoles('superadmin'),
   upload.single('file'),
   importExcelKK
 );
 
 // Modifikasi Dokumen (Edit, Hapus, Copy)
-router.put('/:id', authorizeRoles('superadmin', 'admin', 'user'), updateDocument);
-router.delete('/:id', authorizeRoles('superadmin', 'admin', 'user'), deleteDocument);
+router.put('/:id', authorizeRoles('superadmin', 'admin'), updateDocument);
+router.delete('/:id', authorizeRoles('superadmin', 'admin'), deleteDocument);
 router.post('/:id/copy', authorizeRoles('superadmin', 'admin'), copyDocument);
 
-// View Dokumen (User Biasa)
+// View Dokumen (Admin / Exec)
 router.get(
   '/',
-  authorizeRoles('superadmin', 'admin', 'user', 'guest'),
+  authorizeRoles('superadmin', 'admin'),
   getDocuments
-);
-
-router.get(
-  '/file/:filename',
-  authorizeRoles('superadmin', 'admin', 'user', 'guest'),
-  getDocumentFile
 );
 
 // View Semua Dokumen (Admin / Exec)
 router.get(
   '/all',
-  authorizeRoles('superadmin', 'admin', 'guest'),
+  authorizeRoles('superadmin', 'admin'),
   adminListDocuments
 );
 
@@ -103,58 +83,49 @@ router.get(
 
 /**
  * 1) KESEJAHTERAAN
- * base path contoh:
- *   - GET  /kesejahteraan/search
- *   - POST /kesejahteraan
- *   - GET  /kesejahteraan/list
  */
 router.get(
   '/kesejahteraan/search',
-  authorizeRoles('superadmin', 'admin', 'user'),
+  authorizeRoles('superadmin', 'admin'),
   searchKKByNomor
 );
 
 router.post(
   '/kesejahteraan',
-  authorizeRoles('superadmin', 'admin', 'user'),
+  authorizeRoles('superadmin', 'admin'),
   createOrUpdateKesejahteraan
 );
 
 router.get(
   '/kesejahteraan/list',
-  authorizeRoles('superadmin', 'admin', 'user'),
+  authorizeRoles('superadmin', 'admin'),
   listUserKesejahteraan
 );
 
 /**
- * 2) KESEJAHTERAAN / EMPLOYMENT
- * base path contoh:
- *   - GET    /kesejahteraan/search
- *   - PUT    /kesejahteraan
- *   - GET    /kesejahteraan/list
- *   - DELETE /kesejahteraan/:id
+ * 2) EMPLOYMENT
  */
 router.get(
-  '/kesejahteraan/search',
-  authorizeRoles('superadmin', 'admin', 'user'),
+  '/employment/search',
+  authorizeRoles('superadmin', 'admin'),
   searchEmploymentByNIK
 );
 
 router.put(
-  '/kesejahteraan',
-  authorizeRoles('superadmin', 'admin', 'user'),
+  '/employment',
+  authorizeRoles('superadmin', 'admin'),
   updateEmploymentData
 );
 
 router.get(
-  '/kesejahteraan/list',
-  authorizeRoles('superadmin', 'admin', 'user'),
+  '/employment/list',
+  authorizeRoles('superadmin', 'admin'),
   listUserEmployment
 );
 
 router.delete(
-  '/kesejahteraan/:id',
-  authorizeRoles('superadmin', 'admin', 'user'),
+  '/employment/:id',
+  authorizeRoles('superadmin', 'admin'),
   deleteUserEmployment
 );
 
