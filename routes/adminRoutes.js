@@ -46,7 +46,7 @@ router.get(
 router.get('/kk', authorizeRoles('superadmin', 'admin'), getKKTable);
 router.get('/employment', authorizeRoles('superadmin', 'admin'), getEmploymentData);
 router.get('/kesejahteraan', authorizeRoles('superadmin', 'admin'), getKesejahteraanData);
-router.get('/land', authorizeRoles('superadmin', 'admin'), getLandData);
+router.get('/land', authorizeRoles('superadmin', 'admin', 'user'), getLandData);
 
 // ======================================================
 //  GROUP 2: DATA MANAGEMENT (DB Record) → superadmin & admin
