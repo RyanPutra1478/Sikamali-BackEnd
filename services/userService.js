@@ -29,7 +29,12 @@ const UserService = {
             delete data.name;
         }
 
-        // 3. Handle Role Mapping (if name provided instead of ID)
+        // 3. Normalize empty email to null to avoid unique key constraint violation on empty strings
+        if (data.email === '' || data.email === undefined) {
+            data.email = null;
+        }
+
+        // 4. Handle Role Mapping (if name provided instead of ID)
         const roleToMap = roleName || role;
         if (roleToMap && !data.role_id) {
             const roleObj = await RoleModel.getByName(roleToMap);
@@ -50,6 +55,10 @@ const UserService = {
         if (data.password) {
             const salt = await bcrypt.genSalt(10);
             data.password = await bcrypt.hash(data.password, salt);
+        }
+        // Normalize empty email to null if it's explicitly set to an empty string
+        if (data.email === '') {
+            data.email = null;
         }
         return await UserModel.update(id, data);
     },
