@@ -23,7 +23,13 @@ const UserService = {
         const salt = await bcrypt.genSalt(10);
         data.password = await bcrypt.hash(password, salt);
 
-        // 2. Handle Role Mapping (if name provided instead of ID)
+        // 2. Map 'name' to 'nama' database column if exists
+        if (data.name !== undefined) {
+            data.nama = data.name;
+            delete data.name;
+        }
+
+        // 3. Handle Role Mapping (if name provided instead of ID)
         const roleToMap = roleName || role;
         if (roleToMap && !data.role_id) {
             const roleObj = await RoleModel.getByName(roleToMap);

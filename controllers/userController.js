@@ -46,7 +46,7 @@ exports.createUser = async (req, res) => {
     const userId = await UserService.registerUser(req.body);
     const user = await UserService.getUserById(userId);
 
-    await logController.createLog(req.user.id, 'CREATE', 'USER', userId, { username: user.username, role: user.role }, req.ip);
+    await logController.createLog(req.user?.id || null, 'CREATE', 'USER', userId, { username: user.username, role: user.role }, req.ip);
 
     res.status(201).json({ success: true, message: 'Pengguna berhasil dibuat', data: user });
   } catch (err) {
