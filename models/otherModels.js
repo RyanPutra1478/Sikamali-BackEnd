@@ -11,7 +11,14 @@ const KesejahteraanModel = {
         return rows[0];
     },
 
-    getAllEnriched: async (userId = null, isPrasejahteraOnly = false) => {
+    getAllEnriched: async (userId = null, isPrasejahteraOnly = false, options = {}) => {
+        let countSql = `
+            SELECT COUNT(*) as total
+            FROM kesejahteraan p
+            JOIN kk k ON p.kk_id = k.id
+            JOIN kk_members m ON p.member_id = m.id
+            LEFT JOIN users u ON p.assessed_by = u.id
+        `;
         let sql = `
             SELECT 
                 p.*, 
@@ -38,7 +45,32 @@ const KesejahteraanModel = {
         }
 
         if (conditions.length > 0) {
-            sql += ' WHERE ' + conditions.join(' AND ');
+            const whereClause = ' WHERE ' + conditions.join(' AND ');
+            sql += whereClause;
+            countSql += whereClause;
+        }
+
+        if (options && (options.page || options.limit)) {
+            const page = Math.max(1, parseInt(options.page) || 1);
+            const limit = Math.max(1, parseInt(options.limit) || 20);
+            const offset = (page - 1) * limit;
+
+            const [[{ total }]] = await db.query(countSql, params);
+
+            sql += ' LIMIT ? OFFSET ?';
+            const queryParams = [...params, limit, offset];
+
+            const [rows] = await db.query(sql, queryParams);
+
+            return {
+                data: rows,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            };
         }
 
         const [rows] = await db.query(sql, params);
@@ -84,7 +116,12 @@ const LandPlotModel = {
         return rows;
     },
 
-    getAllEnriched: async (userId = null) => {
+    getAllEnriched: async (userId = null, options = {}) => {
+        let countSql = `
+            SELECT COUNT(*) as total
+            FROM land_plots lp
+            LEFT JOIN kk k ON lp.kk_id = k.id
+        `;
         let sql = `
             SELECT 
                 lp.*,
@@ -94,10 +131,36 @@ const LandPlotModel = {
         `;
         const params = [];
         if (userId) {
-            sql += ' WHERE (k.created_by = ? OR lp.user_id = ?)';
+            const whereClause = ' WHERE (k.created_by = ? OR lp.user_id = ?)';
+            sql += whereClause;
+            countSql += whereClause;
             params.push(userId, userId);
         }
         sql += ' ORDER BY lp.created_at DESC';
+
+        if (options && (options.page || options.limit)) {
+            const page = Math.max(1, parseInt(options.page) || 1);
+            const limit = Math.max(1, parseInt(options.limit) || 20);
+            const offset = (page - 1) * limit;
+
+            const [[{ total }]] = await db.query(countSql, params);
+
+            sql += ' LIMIT ? OFFSET ?';
+            const queryParams = [...params, limit, offset];
+
+            const [rows] = await db.query(sql, queryParams);
+
+            return {
+                data: rows,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            };
+        }
+
         const [rows] = await db.query(sql, params);
         return rows;
     },

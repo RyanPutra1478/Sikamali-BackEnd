@@ -11,7 +11,13 @@ const EmploymentModel = {
         return rows;
     },
 
-    getAllEnriched: async (userId = null) => {
+    getAllEnriched: async (userId = null, options = {}) => {
+        let countSql = `
+            SELECT COUNT(*) as total
+            FROM employment_data ed
+            JOIN kk_members m ON ed.member_id = m.id
+            JOIN kk k ON ed.kk_id = k.id
+        `;
         let sql = `
             SELECT 
                 ed.*, 
@@ -23,10 +29,44 @@ const EmploymentModel = {
             JOIN kk k ON ed.kk_id = k.id
         `;
         const params = [];
+        const countParams = [];
         if (userId) {
             sql += ' WHERE k.created_by = ?';
+            countSql += ' WHERE k.created_by = ?';
             params.push(userId);
+            countParams.push(userId);
         }
+
+        if (options && (options.page || options.limit)) {
+            const page = Math.max(1, parseInt(options.page) || 1);
+            const limit = Math.max(1, parseInt(options.limit) || 20);
+            const offset = (page - 1) * limit;
+
+            const [[{ total }]] = await db.query(countSql, countParams);
+
+            sql += ' LIMIT ? OFFSET ?';
+            params.push(limit, offset);
+
+            const [rows] = await db.query(sql, params);
+            const mappedRows = rows.map(row => {
+                if (row.zona_lingkar_tambang !== undefined) {
+                    row.zona = row.zona_lingkar_tambang;
+                    delete row.zona_lingkar_tambang;
+                }
+                return row;
+            });
+
+            return {
+                data: mappedRows,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            };
+        }
+
         const [rows] = await db.query(sql, params);
         return rows.map(row => {
             if (row.zona_lingkar_tambang !== undefined) {

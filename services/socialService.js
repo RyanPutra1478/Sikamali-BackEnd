@@ -4,9 +4,9 @@ const db = require('../config/database');
 const logController = require('../controllers/logController');
 
 const SocialService = {
-    getKesejahteraanData: async (user) => {
+    getKesejahteraanData: async (user, options = {}) => {
         const userIdFilter = (user.role === 'superadmin' || user.role === 'admin' || user.role === 'user') ? null : user.id;
-        return await KesejahteraanModel.getAllEnriched(userIdFilter, false);
+        return await KesejahteraanModel.getAllEnriched(userIdFilter, false, options);
     },
 
     upsertKesejahteraan: async (user, data, ip) => {

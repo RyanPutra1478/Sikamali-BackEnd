@@ -10,8 +10,8 @@ const UserService = {
         return await UserModel.getById(id);
     },
 
-    getAllUsers: async () => {
-        return await UserModel.getAll();
+    getAllUsers: async (options = {}) => {
+        return await UserModel.getAll(options);
     },
 
     registerUser: async (userData) => {

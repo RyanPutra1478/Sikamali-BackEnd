@@ -19,7 +19,8 @@ const KKModel = {
         });
     },
 
-    getAllEnriched: async (userId = null) => {
+    getAllEnriched: async (userId = null, options = {}) => {
+        let countSql = 'SELECT COUNT(*) as total FROM kk k';
         let sql = `
             SELECT 
                 k.*, 
@@ -41,11 +42,45 @@ const KKModel = {
             ) lp ON k.id = lp.kk_id
         `;
         const params = [];
+        const countParams = [];
         if (userId) {
             sql += ' WHERE k.created_by = ?';
+            countSql += ' WHERE k.created_by = ?';
             params.push(userId);
+            countParams.push(userId);
         }
         sql += ' ORDER BY k.created_at DESC';
+
+        if (options && (options.page || options.limit)) {
+            const page = Math.max(1, parseInt(options.page) || 1);
+            const limit = Math.max(1, parseInt(options.limit) || 20);
+            const offset = (page - 1) * limit;
+
+            const [[{ total }]] = await db.query(countSql, countParams);
+
+            sql += ' LIMIT ? OFFSET ?';
+            params.push(limit, offset);
+
+            const [rows] = await db.query(sql, params);
+            const mappedRows = rows.map(row => {
+                if (row.hasOwnProperty('zona_lingkar_tambang')) {
+                    row.zona = row.zona_lingkar_tambang;
+                    delete row.zona_lingkar_tambang;
+                }
+                return row;
+            });
+
+            return {
+                data: mappedRows,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            };
+        }
+
         const [rows] = await db.query(sql, params);
         return rows.map(row => {
             if (row.hasOwnProperty('zona_lingkar_tambang')) {

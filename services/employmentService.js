@@ -5,9 +5,9 @@ const db = require('../config/database');
 const logController = require('../controllers/logController');
 
 const EmploymentService = {
-    getEmploymentData: async (user) => {
+    getEmploymentData: async (user, options = {}) => {
         const userIdFilter = (user.role === 'superadmin' || user.role === 'admin' || user.role === 'user') ? null : user.id;
-        return await EmploymentModel.getAllEnriched(userIdFilter);
+        return await EmploymentModel.getAllEnriched(userIdFilter, options);
     },
 
     upsertEmploymentFull: async (user, data, ip) => {

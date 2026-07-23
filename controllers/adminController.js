@@ -19,7 +19,8 @@ async function getKKTable(req, res) {
     const { role, id } = req.user;
     // Allow superadmin, admin, and user (staff) to see all data
     const userIdFilter = (role === 'superadmin' || role === 'admin' || role === 'user') ? null : id;
-    const rows = await KKModel.getAllEnriched(userIdFilter);
+    const { page, limit } = req.query;
+    const rows = await KKModel.getAllEnriched(userIdFilter, { page, limit });
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -28,7 +29,8 @@ async function getKKTable(req, res) {
 
 async function getKesejahteraanData(req, res) {
   try {
-    const data = await SocialService.getKesejahteraanData(req.user);
+    const { page, limit } = req.query;
+    const data = await SocialService.getKesejahteraanData(req.user, { page, limit });
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -64,7 +66,8 @@ async function deleteKesejahteraanRecord(req, res) {
 
 async function getEmploymentData(req, res) {
   try {
-    const data = await EmploymentService.getEmploymentData(req.user);
+    const { page, limit } = req.query;
+    const data = await EmploymentService.getEmploymentData(req.user, { page, limit });
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -92,7 +95,10 @@ async function deleteEmploymentData(req, res) {
 async function getLandData(req, res) {
   try {
     const { LandPlotModel } = require('../models/otherModels');
-    const data = await LandPlotModel.getAllEnriched();
+    const { page, limit } = req.query;
+    const { role, id } = req.user;
+    const userIdFilter = (role === 'superadmin' || role === 'admin' || role === 'user') ? null : id;
+    const data = await LandPlotModel.getAllEnriched(userIdFilter, { page, limit });
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -111,7 +117,8 @@ async function updateLandData(req, res) {
 
 async function listUsers(req, res) {
   try {
-    const users = await UserService.getAllUsers();
+    const { page, limit } = req.query;
+    const users = await UserService.getAllUsers({ page, limit });
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });

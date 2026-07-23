@@ -53,11 +53,12 @@ const refreshToken = async (req, res) => {
       ...result
     });
   } catch (error) {
-    console.error('Refresh token error:', error);
     if (error.name === 'TokenExpiredError') {
+      console.warn(`[AUTH] Refresh Token Expired. IP: ${req.ip}`);
       await AuthService.logout(token);  
       return res.status(401).json({ success: false, error: 'Sesi telah berakhir. Silakan login kembali.' });
     }
+    console.error('Refresh token error:', error);
     res.status(403).json({ success: false, error: error.message });
   }
 };

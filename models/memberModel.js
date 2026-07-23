@@ -1,7 +1,12 @@
 const db = require('../config/database');
 
 const MemberModel = {
-    getAll: async (userId = null) => {
+    getAll: async (userId = null, options = {}) => {
+        let countSql = `
+            SELECT COUNT(*) as total
+            FROM kk_members m
+            JOIN kk k ON m.kk_id = k.id
+        `;
         let sql = `
             SELECT m.*, k.nomor_kk, k.kepala_keluarga, TIMESTAMPDIFF(YEAR, m.tanggal_lahir, CURDATE()) AS umur 
             FROM kk_members m 
@@ -9,9 +14,35 @@ const MemberModel = {
         `;
         const params = [];
         if (userId) {
-            sql += ' WHERE k.created_by = ?';
+            const whereClause = ' WHERE k.created_by = ?';
+            sql += whereClause;
+            countSql += whereClause;
             params.push(userId);
         }
+
+        if (options && (options.page || options.limit)) {
+            const page = Math.max(1, parseInt(options.page) || 1);
+            const limit = Math.max(1, parseInt(options.limit) || 20);
+            const offset = (page - 1) * limit;
+
+            const [[{ total }]] = await db.query(countSql, params);
+
+            sql += ' LIMIT ? OFFSET ?';
+            const queryParams = [...params, limit, offset];
+
+            const [rows] = await db.query(sql, queryParams);
+
+            return {
+                data: rows,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            };
+        }
+
         const [rows] = await db.query(sql, params);
         return rows;
     },

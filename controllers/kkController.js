@@ -65,9 +65,10 @@ exports.deleteKKMember = async (req, res) => {
 exports.getAllMembers = async (req, res) => {
     try {
         const { role, id } = req.user;
+        const { page, limit } = req.query;
         // Allow superadmin, admin, and user (staff) to see all data
         const userIdFilter = (role === 'superadmin' || role === 'admin' || role === 'user') ? null : id;
-        const rows = await MemberModel.getAll(userIdFilter);
+        const rows = await MemberModel.getAll(userIdFilter, { page, limit });
         res.json(rows);
     } catch (err) {
         res.status(500).json({ error: err.message });

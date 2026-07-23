@@ -1,0 +1,1470 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Sikamali API",
+    "description": "**Sistem Informasi Kependudukan Masyarakat Lingkar Tambang**\n\n## Cara Penggunaan\n1. Gunakan endpoint `POST /api/auth/login` untuk login\n2. Salin nilai `token` dari response\n3. Klik tombol **Authorize** di atas, masukkan: `Bearer <token>`\n4. Semua endpoint yang membutuhkan autentikasi akan otomatis menggunakan token tersebut\n\n## Rate Limiting\n- **Global:** 500 request per IP per 15 menit\n- **Login:** 500 percobaan per IP per 1 jam",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Sikamali Dev Team"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://sikamali-backend.devryan.my.id",
+      "description": "Production Server"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Local Development Server"
+    }
+  ],
+  "security": [],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Masukkan token JWT yang didapat dari endpoint login. Format: `Bearer <token>`"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error": { "type": "string", "example": "Pesan error" }
+        }
+      },
+      "SuccessMessage": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Operasi berhasil" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "username": { "type": "string", "example": "admin" },
+          "email": { "type": "string", "example": "admin@example.com" },
+          "role": { "type": "string", "enum": ["superadmin", "admin", "user", "viewer"] }
+        }
+      },
+      "KK": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "nomor_kk": { "type": "string", "example": "7401100000000001", "description": "16 digit nomor KK" },
+          "kepala_keluarga": { "type": "string", "example": "BUDI SANTOSO" },
+          "alamat": { "type": "string", "example": "Jl. Contoh No. 1" },
+          "desa": { "type": "string", "example": "Wolo" },
+          "kecamatan": { "type": "string" },
+          "kabupaten": { "type": "string" },
+          "provinsi": { "type": "string" },
+          "zona_lingkar_tambang": { "type": "string" }
+        }
+      },
+      "Member": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "kk_id": { "type": "integer" },
+          "nik": { "type": "string", "example": "7401101234567890", "description": "16 digit NIK" },
+          "nama": { "type": "string", "example": "BUDI SANTOSO" },
+          "jenis_kelamin": { "type": "string", "enum": ["L", "P"] },
+          "tanggal_lahir": { "type": "string", "format": "date", "example": "1990-01-15" },
+          "umur": { "type": "integer", "example": 35 },
+          "pendidikan": { "type": "string", "example": "SLTA/SEDERAJAT" },
+          "pekerjaan": { "type": "string", "example": "WIRASWASTA" },
+          "hubungan_keluarga": { "type": "string", "example": "KEPALA KELUARGA" },
+          "status_domisili": { "type": "string", "example": "MENETAP" }
+        }
+      },
+      "PublicStats": {
+        "type": "object",
+        "properties": {
+          "totalKK": { "type": "integer", "example": 250 },
+          "totalPenduduk": { "type": "integer", "example": 1000 },
+          "keluargaPrasejahtera": { "type": "integer", "example": 80 },
+          "keluargaSejahtera": { "type": "integer", "example": 120 },
+          "keluargaSejahteraMandiri": { "type": "integer", "example": 50 },
+          "angkatanKerja": { "type": "integer", "example": 500 },
+          "sudahBekerja": { "type": "integer", "example": 350 },
+          "belumBekerja": { "type": "integer", "example": 150 }
+        }
+      },
+      "Employment": {
+        "type": "object",
+        "properties": {
+          "nik": { "type": "string", "example": "7401101234567890" },
+          "nama": { "type": "string", "example": "BUDI SANTOSO" },
+          "status_kerja": { "type": "string", "enum": ["SUDAH BEKERJA", "BELUM BEKERJA"] },
+          "skill_tags": { "type": "string", "example": "Pertanian, Perikanan" },
+          "tempat_bekerja": { "type": "string", "example": "PT. Contoh" },
+          "pendidikan_terakhir": { "type": "string", "example": "SLTA/SEDERAJAT" },
+          "no_hp_wa": { "type": "string", "example": "081234567890" },
+          "email": { "type": "string", "example": "budi@email.com" },
+          "keterangan": { "type": "string" }
+        }
+      },
+      "Zone": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "nama_zona": { "type": "string", "example": "Ring 1" },
+          "keterangan": { "type": "string", "example": "Zona dalam" }
+        }
+      },
+      "LogEntry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "user_id": { "type": "integer" },
+          "username": { "type": "string" },
+          "aksi": { "type": "string", "example": "CREATE_KK" },
+          "detail": { "type": "string" },
+          "ip_address": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer", "example": 150 },
+          "page": { "type": "integer", "example": 1 },
+          "limit": { "type": "integer", "example": 20 },
+          "totalPages": { "type": "integer", "example": 8 }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Tidak terautentikasi",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "success": false, "error": "Sesi telah berakhir. Silakan login kembali." }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Tidak memiliki hak akses",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "success": false, "error": "Akses ditolak" }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Data tidak ditemukan",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Kesalahan internal server",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    { "name": "Utilitas", "description": "Health check dan ping database" },
+    { "name": "Autentikasi", "description": "Login, logout, refresh token, dan manajemen sesi" },
+    { "name": "Profil", "description": "Manajemen profil pengguna yang sedang login" },
+    { "name": "Publik", "description": "Endpoint publik tanpa autentikasi (untuk landing page)" },
+    { "name": "Kartu Keluarga (KK)", "description": "Manajemen data KK, anggota, dan import Excel" },
+    { "name": "Admin - Data", "description": "Akses dan pengelolaan data KK, angkatan kerja, kesejahteraan, dan lahan" },
+    { "name": "Admin - Pengguna", "description": "Manajemen akun pengguna sistem (superadmin only)" },
+    { "name": "Lahan", "description": "Manajemen data lahan, koordinat, dan foto rumah" },
+    { "name": "Statistik", "description": "Statistik dashboard dan laporan detail" },
+    { "name": "Zona", "description": "Manajemen zona lingkar tambang" },
+    { "name": "Wilayah", "description": "Data wilayah Indonesia (provinsi, kabupaten, kecamatan, desa)" },
+    { "name": "Preview", "description": "Data dalam format export/preview lengkap" },
+    { "name": "Log Aktivitas", "description": "Riwayat aktivitas seluruh pengguna (superadmin only)" }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "tags": ["Utilitas"],
+        "summary": "Cek status server",
+        "description": "Memastikan server API berjalan",
+        "responses": {
+          "200": {
+            "description": "Server berjalan",
+            "content": {
+              "application/json": {
+                "example": { "message": "Sistem Informasi Kependudukan Masyarakat Lingkar Tambang API" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ping": {
+      "get": {
+        "tags": ["Utilitas"],
+        "summary": "Cek koneksi database",
+        "responses": {
+          "200": {
+            "description": "Database terhubung",
+            "content": {
+              "application/json": {
+                "example": { "status": "ok", "message": "Database connected" }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Autentikasi"],
+        "summary": "Login",
+        "description": "Login menggunakan username dan password. Mengembalikan access token dan refresh token.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": { "type": "string", "example": "admin" },
+                  "password": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login berhasil",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                  "user": { "id": 1, "username": "admin", "role": "superadmin" },
+                  "message": "Login berhasil"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Kredensial salah",
+            "content": {
+              "application/json": {
+                "example": { "success": false, "error": "Username atau password salah" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/refresh-token": {
+      "post": {
+        "tags": ["Autentikasi"],
+        "summary": "Refresh access token",
+        "description": "Memperbarui access token menggunakan refresh token yang masih valid.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["refreshToken"],
+                "properties": {
+                  "refreshToken": { "type": "string", "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token diperbarui",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": ["Autentikasi"],
+        "summary": "Logout",
+        "description": "Menghapus refresh token dari database.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["refreshToken"],
+                "properties": {
+                  "refreshToken": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Logout berhasil",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "message": "Logout berhasil" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": ["Autentikasi"],
+        "summary": "Data pengguna aktif",
+        "description": "Mendapatkan data pengguna yang sedang login berdasarkan token.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Data pengguna",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/auth/change-password": {
+      "post": {
+        "tags": ["Autentikasi"],
+        "summary": "Ubah password",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["currentPassword", "newPassword"],
+                "properties": {
+                  "currentPassword": { "type": "string", "example": "password_lama" },
+                  "newPassword": { "type": "string", "example": "password_baru_min6", "minLength": 6 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password berhasil diubah",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "message": "Password berhasil diubah. Silakan login kembali." }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/profile": {
+      "get": {
+        "tags": ["Profil"],
+        "summary": "Lihat profil saya",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Data profil",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "put": {
+        "tags": ["Profil"],
+        "summary": "Update profil saya",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nama": { "type": "string", "example": "Nama Baru" },
+                  "email": { "type": "string", "example": "email@baru.com" },
+                  "username": { "type": "string", "example": "username_baru" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profil diperbarui" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/public/stats": {
+      "get": {
+        "tags": ["Publik"],
+        "summary": "Statistik ringkasan",
+        "description": "Statistik untuk landing page. Tidak memerlukan token.",
+        "parameters": [
+          {
+            "name": "desa",
+            "in": "query",
+            "description": "Filter berdasarkan nama desa",
+            "required": false,
+            "schema": { "type": "string", "example": "Wolo" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statistik berhasil diambil",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PublicStats" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/villages": {
+      "get": {
+        "tags": ["Publik"],
+        "summary": "Daftar desa tersedia",
+        "description": "Mendapatkan daftar nama desa/kelurahan yang ada di database.",
+        "responses": {
+          "200": {
+            "description": "Daftar desa",
+            "content": {
+              "application/json": {
+                "example": ["Wolo", "Lapao-pao", "Tolowe Ponre Waru"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/comparison": {
+      "get": {
+        "tags": ["Publik"],
+        "summary": "Perbandingan data antar desa",
+        "responses": {
+          "200": {
+            "description": "Data perbandingan",
+            "content": {
+              "application/json": {
+                "example": [
+                  { "desa": "Wolo", "totalKK": 50, "angkatanKerja": 100 }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kk/members": {
+      "get": {
+        "tags": ["Kartu Keluarga (KK)"],
+        "summary": "Semua anggota keluarga",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Nomor halaman (opsional, default: 1)",
+            "required": false,
+            "schema": { "type": "integer", "example": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Jumlah data per halaman (opsional, default: 20)",
+            "required": false,
+            "schema": { "type": "integer", "example": 20 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar anggota terpaginasi (jika query page/limit diisi) atau array murni",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Member" } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Kartu Keluarga (KK)"],
+        "summary": "Tambah anggota keluarga",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["kk_id", "nik", "nama"],
+                "properties": {
+                  "kk_id": { "type": "integer", "example": 1 },
+                  "nik": { "type": "string", "example": "7401101234567890" },
+                  "nama": { "type": "string", "example": "BUDI SANTOSO" },
+                  "jenis_kelamin": { "type": "string", "enum": ["L", "P"] },
+                  "tanggal_lahir": { "type": "string", "format": "date", "example": "1990-01-15" },
+                  "hubungan_keluarga": { "type": "string", "example": "KEPALA KELUARGA" },
+                  "pendidikan": { "type": "string", "example": "SLTA/SEDERAJAT" },
+                  "pekerjaan": { "type": "string", "example": "WIRASWASTA" },
+                  "status_domisili": { "type": "string", "example": "MENETAP" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Anggota berhasil ditambahkan",
+            "content": {
+              "application/json": {
+                "example": { "message": "Anggota keluarga berhasil ditambahkan", "id": 123 }
+              }
+            }
+          },
+          "400": { "description": "Data tidak valid" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/kk/members/{id}": {
+      "put": {
+        "tags": ["Kartu Keluarga (KK)"],
+        "summary": "Update anggota keluarga",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "ID anggota" }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Member" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Data diperbarui" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "delete": {
+        "tags": ["Kartu Keluarga (KK)"],
+        "summary": "Hapus anggota keluarga",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Anggota dihapus" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/kk/header": {
+      "post": {
+        "tags": ["Kartu Keluarga (KK)"],
+        "summary": "Buat header KK baru",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["nomor_kk", "kepala_keluarga"],
+                "properties": {
+                  "nomor_kk": { "type": "string", "example": "7401100000000001", "description": "16 digit" },
+                  "kepala_keluarga": { "type": "string", "example": "BUDI SANTOSO" },
+                  "alamat": { "type": "string" },
+                  "desa": { "type": "string", "example": "Wolo" },
+                  "kecamatan": { "type": "string" },
+                  "kabupaten": { "type": "string" },
+                  "provinsi": { "type": "string" },
+                  "zona_lingkar_tambang": { "type": "string" },
+                  "foto_rumah": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "KK berhasil dibuat",
+            "content": {
+              "application/json": {
+                "example": { "message": "KK Header berhasil dibuat", "kk_id": 11 }
+              }
+            }
+          },
+          "400": { "description": "Nomor KK sudah terdaftar atau data tidak valid" }
+        }
+      }
+    },
+    "/api/kk/header/{id}": {
+      "put": {
+        "tags": ["Kartu Keluarga (KK)"],
+        "summary": "Update header KK",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kepala_keluarga": { "type": "string" },
+                  "alamat": { "type": "string" },
+                  "desa": { "type": "string" },
+                  "foto_rumah": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "KK diperbarui" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "delete": {
+        "tags": ["Kartu Keluarga (KK)"],
+        "summary": "Hapus header KK",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "KK dihapus" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/kk/{id}": {
+      "get": {
+        "tags": ["Kartu Keluarga (KK)"],
+        "summary": "Detail KK beserta anggota",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "ID KK" }
+        ],
+        "responses": {
+          "200": { "description": "Detail KK" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/kk/import/excel": {
+      "post": {
+        "tags": ["Kartu Keluarga (KK)"],
+        "summary": "Import dari Excel",
+        "description": "Import data KK, anggota, angkatan kerja, dan prasejahtera dari file Excel. Maksimal 10 file sekaligus.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "binary" },
+                    "description": "File Excel (.xlsx/.xls)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import selesai",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Import selesai",
+                  "stats": {
+                    "kk": { "total": 50, "success": 48 },
+                    "members": { "total": 200, "success": 195 },
+                    "employment": { "total": 100, "success": 98 }
+                  },
+                  "errors": ["Row 5: NIK kosong"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/stats": {
+      "get": {
+        "tags": ["Admin - Data"],
+        "summary": "Statistik dashboard admin",
+        "description": "**Role:** superadmin, admin, user",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Statistik",
+            "content": {
+              "application/json": {
+                "example": {
+                  "totalKK": 250, "totalAnggota": 1000,
+                  "angkatanKerja": 500, "sudahBekerja": 350,
+                  "belumBekerja": 150, "prasejahtera": 80
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/admin/kk": {
+      "get": {
+        "tags": ["Admin - Data"],
+        "summary": "Semua data KK (tabel admin)",
+        "description": "**Role:** superadmin, admin, user",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Nomor halaman (opsional, default: 1)",
+            "required": false,
+            "schema": { "type": "integer", "example": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Jumlah data per halaman (opsional, default: 20)",
+            "required": false,
+            "schema": { "type": "integer", "example": 20 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Daftar KK terpaginasi (jika query page/limit diisi) atau array murni" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/admin/employment": {
+      "get": {
+        "tags": ["Admin - Data"],
+        "summary": "Data angkatan kerja",
+        "description": "**Role:** superadmin, admin, user",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Nomor halaman (opsional, default: 1)",
+            "required": false,
+            "schema": { "type": "integer", "example": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Jumlah data per halaman (opsional, default: 20)",
+            "required": false,
+            "schema": { "type": "integer", "example": 20 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Data angkatan kerja terpaginasi (jika query page/limit diisi) atau array murni" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/admin/employment/full": {
+      "put": {
+        "tags": ["Admin - Data"],
+        "summary": "Update data angkatan kerja (by NIK)",
+        "description": "**Role:** superadmin, admin, user",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Employment" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Data diperbarui" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/admin/employment/{id}": {
+      "delete": {
+        "tags": ["Admin - Data"],
+        "summary": "Hapus data angkatan kerja",
+        "description": "**Role:** superadmin only",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Data dihapus" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/admin/kesejahteraan": {
+      "get": {
+        "tags": ["Admin - Data"],
+        "summary": "Data kesejahteraan",
+        "description": "**Role:** superadmin, admin, user",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Nomor halaman (opsional, default: 1)",
+            "required": false,
+            "schema": { "type": "integer", "example": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Jumlah data per halaman (opsional, default: 20)",
+            "required": false,
+            "schema": { "type": "integer", "example": 20 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Data kesejahteraan terpaginasi (jika query page/limit diisi) atau array murni" }
+        }
+      },
+      "post": {
+        "tags": ["Admin - Data"],
+        "summary": "Buat/update data kesejahteraan",
+        "description": "**Role:** superadmin, admin, user",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kk_id": { "type": "integer" },
+                  "kategori_sosial": { "type": "string", "example": "PRASEJAHTERA" },
+                  "kriteria": { "type": "string" },
+                  "tingkat_sosial": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Data disimpan" }
+        }
+      }
+    },
+    "/api/admin/kesejahteraan/{id}": {
+      "put": {
+        "tags": ["Admin - Data"],
+        "summary": "Update data kesejahteraan",
+        "description": "**Role:** superadmin, admin, user",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kategori_sosial": { "type": "string" },
+                  "kriteria": { "type": "string" },
+                  "tingkat_sosial": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Data diperbarui" }
+        }
+      },
+      "delete": {
+        "tags": ["Admin - Data"],
+        "summary": "Hapus data kesejahteraan",
+        "description": "**Role:** superadmin only",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Data dihapus" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/admin/land": {
+      "get": {
+        "tags": ["Admin - Data"],
+        "summary": "Data lahan",
+        "description": "**Role:** superadmin, admin, user, viewer",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Nomor halaman (opsional, default: 1)",
+            "required": false,
+            "schema": { "type": "integer", "example": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Jumlah data per halaman (opsional, default: 20)",
+            "required": false,
+            "schema": { "type": "integer", "example": 20 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Data lahan terpaginasi (jika query page/limit diisi) atau array murni" }
+        }
+      }
+    },
+    "/api/admin/land/{id}": {
+      "put": {
+        "tags": ["Admin - Data"],
+        "summary": "Update data lahan",
+        "description": "**Role:** superadmin, admin, user",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "foto_rumah": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Data diperbarui" }
+        }
+      }
+    },
+    "/api/admin/users-with-kk": {
+      "get": {
+        "tags": ["Admin - Pengguna"],
+        "summary": "Daftar KK (untuk dropdown)",
+        "description": "**Role:** superadmin, admin",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Daftar KK" }
+        }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "tags": ["Admin - Pengguna"],
+        "summary": "Semua akun pengguna",
+        "description": "**Role:** superadmin only",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Nomor halaman (opsional, default: 1)",
+            "required": false,
+            "schema": { "type": "integer", "example": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Jumlah data per halaman (opsional, default: 20)",
+            "required": false,
+            "schema": { "type": "integer", "example": 20 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Daftar pengguna terpaginasi (jika query page/limit diisi) atau array murni" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["Admin - Pengguna"],
+        "summary": "Buat akun pengguna baru",
+        "description": "**Role:** superadmin only",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "email", "password", "role"],
+                "properties": {
+                  "username": { "type": "string", "example": "user_baru" },
+                  "email": { "type": "string", "example": "user@example.com" },
+                  "password": { "type": "string", "example": "password123", "minLength": 6 },
+                  "role": { "type": "string", "enum": ["superadmin", "admin", "user", "viewer"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Pengguna dibuat" },
+          "400": { "description": "Data tidak valid" }
+        }
+      }
+    },
+    "/api/admin/users/{id}": {
+      "put": {
+        "tags": ["Admin - Pengguna"],
+        "summary": "Update data pengguna",
+        "description": "**Role:** superadmin only",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { "type": "string" },
+                  "email": { "type": "string" },
+                  "nama": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Data diperbarui" }
+        }
+      },
+      "delete": {
+        "tags": ["Admin - Pengguna"],
+        "summary": "Hapus pengguna",
+        "description": "**Role:** superadmin only. Tidak bisa menghapus akun sendiri.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Pengguna dihapus" }
+        }
+      }
+    },
+    "/api/admin/users/{id}/role": {
+      "put": {
+        "tags": ["Admin - Pengguna"],
+        "summary": "Ubah role pengguna",
+        "description": "**Role:** superadmin only",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": { "type": "string", "enum": ["superadmin", "admin", "user", "viewer"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Role diperbarui" }
+        }
+      }
+    },
+    "/api/admin/users/{id}/password": {
+      "put": {
+        "tags": ["Admin - Pengguna"],
+        "summary": "Reset password pengguna",
+        "description": "**Role:** superadmin only",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": { "type": "string", "minLength": 6, "example": "passwordbaru123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password diperbarui" }
+        }
+      }
+    },
+    "/api/land/foto/{filename}": {
+      "get": {
+        "tags": ["Lahan"],
+        "summary": "Ambil foto rumah/lahan",
+        "description": "Mengambil file foto berdasarkan nama file. Tidak memerlukan autentikasi.",
+        "parameters": [
+          { "name": "filename", "in": "path", "required": true, "schema": { "type": "string" }, "example": "rumah_123.jpg" }
+        ],
+        "responses": {
+          "200": { "description": "File gambar" }
+        }
+      }
+    },
+    "/api/land/search": {
+      "get": {
+        "tags": ["Lahan"],
+        "summary": "Cari KK",
+        "description": "**Role:** superadmin, admin, user, viewer",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "q", "in": "query", "required": false, "schema": { "type": "string", "example": "BUDI" }, "description": "Kata kunci pencarian" }
+        ],
+        "responses": {
+          "200": { "description": "Hasil pencarian" }
+        }
+      }
+    },
+    "/api/land/kk/{nomor_kk}": {
+      "get": {
+        "tags": ["Lahan"],
+        "summary": "Data KK by Nomor KK",
+        "description": "**Role:** superadmin, admin, user, viewer",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "nomor_kk", "in": "path", "required": true, "schema": { "type": "string" }, "example": "7401100000000001" }
+        ],
+        "responses": {
+          "200": { "description": "Data KK" }
+        }
+      }
+    },
+    "/api/land": {
+      "get": {
+        "tags": ["Lahan"],
+        "summary": "Semua data lahan",
+        "description": "**Role:** superadmin, admin, user, viewer",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Daftar lahan" }
+        }
+      },
+      "post": {
+        "tags": ["Lahan"],
+        "summary": "Tambah data lahan",
+        "description": "**Role:** superadmin, admin, user",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kk_id": { "type": "integer" },
+                  "lat": { "type": "number", "example": -4.027 },
+                  "lng": { "type": "number", "example": 121.572 },
+                  "luas_tanah": { "type": "number" },
+                  "foto_rumah": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Lahan ditambahkan" }
+        }
+      }
+    },
+    "/api/land/{id}": {
+      "put": {
+        "tags": ["Lahan"],
+        "summary": "Update data lahan",
+        "description": "**Role:** superadmin, admin, user",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "lat": { "type": "number" },
+                  "lng": { "type": "number" },
+                  "foto_rumah": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Data diperbarui" }
+        }
+      },
+      "delete": {
+        "tags": ["Lahan"],
+        "summary": "Hapus data lahan",
+        "description": "**Role:** superadmin, admin",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Data dihapus" }
+        }
+      }
+    },
+    "/api/statistics/dashboard": {
+      "get": {
+        "tags": ["Statistik"],
+        "summary": "Statistik dashboard",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Statistik ringkasan" }
+        }
+      }
+    },
+    "/api/statistics/detailed": {
+      "get": {
+        "tags": ["Statistik"],
+        "summary": "Statistik detail lengkap",
+        "description": "Termasuk breakdown per desa, per zona, dll.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Statistik detail" }
+        }
+      }
+    },
+    "/api/locations/zona": {
+      "get": {
+        "tags": ["Zona"],
+        "summary": "Semua zona lingkar tambang",
+        "description": "**Role:** superadmin, admin, user, viewer",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Daftar zona",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Zone" } }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Zona"],
+        "summary": "Tambah zona baru",
+        "description": "**Role:** superadmin, admin, user",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nama_zona": { "type": "string", "example": "Ring 1" },
+                  "keterangan": { "type": "string", "example": "Zona dalam" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Zona dibuat" }
+        }
+      }
+    },
+    "/api/locations/zona/{id}": {
+      "put": {
+        "tags": ["Zona"],
+        "summary": "Update zona",
+        "description": "**Role:** superadmin, admin, user",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Zone" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Zona diperbarui" }
+        }
+      },
+      "delete": {
+        "tags": ["Zona"],
+        "summary": "Hapus zona",
+        "description": "**Role:** superadmin, admin",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Zona dihapus" }
+        }
+      }
+    },
+    "/api/regions/provinces": {
+      "get": {
+        "tags": ["Wilayah"],
+        "summary": "Daftar provinsi Indonesia",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Daftar provinsi" }
+        }
+      }
+    },
+    "/api/regions/regencies/{provinceId}": {
+      "get": {
+        "tags": ["Wilayah"],
+        "summary": "Kabupaten/kota by provinsi",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "provinceId", "in": "path", "required": true, "schema": { "type": "string" }, "example": "74", "description": "ID provinsi (contoh: 74 = Sulawesi Tenggara)" }
+        ],
+        "responses": {
+          "200": { "description": "Daftar kabupaten/kota" }
+        }
+      }
+    },
+    "/api/regions/districts/{regencyId}": {
+      "get": {
+        "tags": ["Wilayah"],
+        "summary": "Kecamatan by kabupaten",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "regencyId", "in": "path", "required": true, "schema": { "type": "string" }, "example": "7401" }
+        ],
+        "responses": {
+          "200": { "description": "Daftar kecamatan" }
+        }
+      }
+    },
+    "/api/regions/villages/{districtId}": {
+      "get": {
+        "tags": ["Wilayah"],
+        "summary": "Desa by kecamatan",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "districtId", "in": "path", "required": true, "schema": { "type": "string" }, "example": "740101" }
+        ],
+        "responses": {
+          "200": { "description": "Daftar desa" }
+        }
+      }
+    },
+    "/api/preview/kk": {
+      "get": {
+        "tags": ["Preview"],
+        "summary": "Preview data KK (format export)",
+        "description": "Termasuk koordinat, jumlah anggota, status angkatan kerja, dan data kesejahteraan. **Role:** superadmin, admin, user, viewer",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Data KK format preview" }
+        }
+      }
+    },
+    "/api/preview/member": {
+      "get": {
+        "tags": ["Preview"],
+        "summary": "Preview data anggota (format export)",
+        "description": "Termasuk NIK, umur, skill, status kerja, kontak. **Role:** superadmin, admin, user, viewer",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Data anggota format preview" }
+        }
+      }
+    },
+    "/api/logs": {
+      "get": {
+        "tags": ["Log Aktivitas"],
+        "summary": "Riwayat aktivitas pengguna",
+        "description": "**Role:** superadmin only",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Daftar log",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/LogEntry" } }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    }
+  }
+}

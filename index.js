@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const db = require('./config/database');
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./docs/swagger.json');
 require("dotenv").config();
 
 // Import routes
@@ -15,6 +17,9 @@ const publicRoutes = require('./routes/publicRoutes');
 const userRoutes = require('./routes/userRoutes');
 
 const app = express();
+
+// Konfigurasi ini WAJIB jika di-hosting di balik Reverse Proxy/Tunnel (Ngrok, Cloudflare, dll)
+app.set('trust proxy', 1);
 
 // Rate Limiting
 const limiter = rateLimit({
@@ -91,6 +96,20 @@ app.use('/api/logs', require('./routes/logRoutes'));
 app.use('/api/kk', require('./routes/kkRoutes'));
 app.use('/api/public', publicRoutes);
 app.use('/api/preview', require('./routes/previewRoutes'));
+
+// Swagger UI — Dokumentasi API Interaktif
+const swaggerOptions = {
+  customSiteTitle: 'Sikamali API Docs',
+  customCss: '.swagger-ui .topbar { background-color: #1a3a5c; } .swagger-ui .topbar-wrapper img { display: none; } .swagger-ui .topbar-wrapper::before { content: "Sikamali API"; color: white; font-size: 1.2rem; font-weight: bold; }',
+  swaggerOptions: {
+    persistAuthorization: true,
+    displayRequestDuration: true,
+    filter: true,
+    tryItOutEnabled: true,
+    syntaxHighlight: false
+  }
+};
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerOptions));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
